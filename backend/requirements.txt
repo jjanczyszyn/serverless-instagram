@@ -1,0 +1,4 @@
+boto3==1.5.19
+PyJWT==1.5.3
+requests==2.18.4
+Pillow==4.1.1

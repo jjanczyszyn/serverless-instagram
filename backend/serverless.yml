@@ -1,0 +1,203 @@
+# serverless.yml
+service: serverless-instagram
+
+# lock us to a pre-2.0 (not yet released) version of the serverless framework to protect us from breaking changes
+frameworkVersion: ">=1.16.0 <2.0.0"
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+      dockerizePip: non-linux
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.6
+  memorySize: 128
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: arn:aws:s3:::${file(./secrets.json):UPLOAD_BUCKET}
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: arn:aws:s3:::${file(./secrets.json):UPLOAD_BUCKET}/*
+    - Effect: "Allow"
+      Action:
+        - s3:PutObject
+      Resource:
+        - arn:aws:s3:::${file(./secrets.json):RESIZED_BUCKET}/*
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${file(./secrets.json):METADATA_TABLE}"
+
+package:
+  individually: true
+  exclude:
+    - '*/**'
+#  include:
+#    - common
+#    - common/response.py
+#    - common/__init__.py
+
+functions:
+  auth:
+    handler: authorizer.handler
+    environment:
+      AUTH0_SECRET: ${file(./secrets.json):AUTH0_SECRET}
+      AUTH0_AUDIENCE: ${file(./secrets.json):AUTH0_AUDIENCE}
+    package:
+      include:
+        - authorizer.py
+
+  signurl:
+    handler: generate_signed_url.handler
+    environment:
+      UPLOAD_BUCKET: ${file(./secrets.json):UPLOAD_BUCKET}
+    package:
+      include:
+        - common/*
+        - generate_signed_url.py
+    events:
+      - http:
+          path: /get_signed_url
+          cors: true
+          method: get
+          authorizer: auth
+  metadata:
+    handler: add_metadata.handler
+    environment:
+        METADATA_TABLE: ${file(./secrets.json):METADATA_TABLE}
+    package:
+      include:
+        - add_metadata.py
+  list:
+    handler: list_metadata.handler
+    environment:
+        METADATA_TABLE: ${file(./secrets.json):METADATA_TABLE}
+    package:
+      include:
+        - common/*
+        - list_metadata.py
+    events:
+      - http:
+          path: /list
+          method: get
+          cors: true
+  resize:
+    handler: image_resize.handler
+    environment:
+        RESIZED_BUCKET: ${file(./secrets.json):RESIZED_BUCKET}
+        UPLOAD_BUCKET: ${file(./secrets.json):UPLOAD_BUCKET}
+    package:
+      include:
+        - image_resize.py
+
+resources:
+  Resources:
+    ResizePermissionUploadBucket:
+      DependsOn:
+        - ResizeLambdaFunction
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
+        Action: "lambda:InvokeFunction"
+        Principal: "s3.amazonaws.com"
+        SourceArn: "arn:aws:s3:::${file(./secrets.json):UPLOAD_BUCKET}"
+
+    UploadBucket:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      DependsOn:
+        - ResizePermissionUploadBucket
+      Properties:
+        BucketName: ${file(./secrets.json):UPLOAD_BUCKET}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - "*"
+              AllowedMethods:
+                - "GET"
+                - "POST"
+                - "PUT"
+              AllowedHeaders:
+                - "*"
+              MaxAge: 3000
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: "s3:ObjectCreated:*"
+              Function:
+                "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
+
+    PushMetadataPermissionResizedBucket:
+      DependsOn:
+        - MetadataLambdaFunction
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
+        Action: "lambda:InvokeFunction"
+        Principal: "s3.amazonaws.com"
+        SourceArn: "arn:aws:s3:::${file(./secrets.json):RESIZED_BUCKET}"
+
+    ImageResizedBucket:
+      DependsOn:
+        - PushMetadataPermissionResizedBucket
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      Properties:
+        BucketName: ${file(./secrets.json):RESIZED_BUCKET}
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: "s3:ObjectCreated:*"
+              Function:
+                "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
+
+    ImageResizedBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      DependsOn:
+        - ImageResizedBucket
+      Properties:
+        Bucket: ${file(./secrets.json):RESIZED_BUCKET}
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "AddPerm"
+              Effect: "Allow"
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: "arn:aws:s3:::${file(./secrets.json):RESIZED_BUCKET}/*"
+
+    MetadataTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: image
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: image
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${file(./secrets.json):METADATA_TABLE}

@@ -57,3 +57,7 @@ typings/
 # dotenv environment variables file
 .env
 
+local/*
+secrets.json
+.serverless
+__pycache__/
