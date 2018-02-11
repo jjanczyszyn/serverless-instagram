@@ -1,3 +1,4 @@
+
 <!doctype html>
 <!--[if lt IE 7]>
   <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
@@ -30,7 +31,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
-          <div class="page-name" ><img src="camera.png" >Serverless Insagram ❤️&lambda; </div>
+          <div class="page-name" ><img src="camera.png" >Serverless Instagram ❤️&lambda; </div>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <div class="navbar-form navbar-right">
@@ -99,9 +100,14 @@
     <script src="js/vendor/moment.min.js"></script>
     <script src="js/vendor/lock-8.min.js"></script>
 
-    <script src="js/user-controller.js"></script>
-    <script src="js/media-mvc.js"></script>
     <script src="js/config.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/application.js"></script>
+    <script>
+     (function () {
+       $(document).ready(function () {
+         application.init(configConstants);
+       });
+     }());
+    </script>
   </body>
 </html>

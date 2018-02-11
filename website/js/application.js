@@ -29,13 +29,118 @@ let ImageCardHelper = {
     }
 };
 
+let AuthStorage = {
+    store: function(token, profile){
+        localStorage.setItem('userToken', token);
+        localStorage.setItem('profile', JSON.stringify(profile, null, 4));
+    },
+    retrieve: function(){
+        var result = {
+            token: null,
+            profile: null,
+            profileJson: null
+        };
+        var token = localStorage.getItem('userToken');
+        var profileJson = localStorage.getItem('profile');
+        if (token) {
+            result.token = token;
+        }
+        if (profileJson) {
+            result.profileJson = profileJson;
+            result.profile = JSON.parse(profileJson);
+        }
+        return result;
+    },
+    clear: function(){
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('profile');
+    }
+};
+
 let UI = {
     showError: function(message) {
         alert(message);
     },
+    UserProfile: {
+        show: function(profile){
+            var showAuthenticationElements = !!profile;
+            if (showAuthenticationElements) {
+                $('#profilename').text(profile.nickname);
+                $('#profilepicture').attr('src', profile.picture);
+            }
+
+            UI.LoginButton.toggle(!showAuthenticationElements);
+            UI.LogoutButton.toggle(showAuthenticationElements);
+            UI.ProfileButton.toggle(showAuthenticationElements);
+        },
+    },
+    LoginButton: {
+        toggle: function(condition) {
+            $('#auth0-login').toggle(condition);
+            return this;
+        },
+        bindEvents: function(auth0Lock){
+            $('#auth0-login').click(function (event) {
+                var options = {
+                    authParams: {
+                        scope: 'openid email user_metadata picture'
+                    }
+                };
+
+                auth0Lock.show(options, function (err, profile, token) {
+                    if (err) {
+                        var message = ['Failed to show auth0 dialog:', err + ""].join(' ');
+                        UI.showError(message);
+                        return;
+                    } else {
+                        AuthStorage.store(token, profile);
+                        UI.UserProfile.show(profile);
+                    }
+                });
+
+                return event.preventDefault();
+            });
+
+        }
+    },
+    LogoutButton: {
+        toggle: function(condition) {
+            $('#auth0-logout').toggle(condition);
+            return this;
+        },
+        bindEvents: function(){
+            $('#auth0-logout').on('click', function(event) {
+                AuthStorage.clear();
+
+                UI.LoginButton.toggle(false);
+                UI.LogoutButton.toggle(false);
+
+                UI.UploadButton.toggle(false);
+                UI.ProfileButton.toggle(false);
+                return event.preventDefault();
+            });
+        }
+    },
+    ProfileButton: {
+        toggle: function(condition) {
+            $('#user-profile').toggle(condition);
+            return this;
+        },
+        bindEvents: function(){
+            $("#user-profile").click(function (event) {
+                var data = AuthStorage.retrieve();
+                $('#user-profile-raw-json').text(data.profileJson);
+                $('#user-profile-modal').modal();
+
+                return event.preventDefault();
+            });
+        }
+    },
     UploadButton: {
         show: function() {
-            $('#upload-image-button').show()
+            $('#upload-image-button')
+                .css('display', 'inline-block')
+                .show();
             return this;
         },
         hide: function() {
@@ -52,6 +157,7 @@ let UI = {
                         "The file uploaded:",
                         "" + fileSizeMB + ""
                     ].join(' ')
+
                     UI.showError(message)
                 } else {
                     onFileSelected(file)
@@ -69,10 +175,12 @@ let UI = {
     },
     Gallery: {
         add: function($card) {
-            return $('#image-list').append($card);
+            $('#image-list').append($card);
+            return this;
         },
         clear: function() {
-            return $('#image-list').empty();
+            $('#image-list').empty();
+            return this;
         }
     },
     UploadProgress: {
@@ -80,7 +188,6 @@ let UI = {
             $('#upload-progress').show();
             return this;
         },
-
         hide: function(){
             $('#upload-progress').hide();
             return this;
@@ -148,20 +255,22 @@ let Lambda = {
     }
 };
 
-let mediaController = {
+let application = {
     config: null,
-    uiElements: {
-        uploadButton: null,
-        uploadProgressBar: null,
-        imageCardTemplate: null,
-        imageList: null,
-    },
-    init: function (configConstants) {
-        this.config = configConstants;
+    init: function (config) {
+        this.config = config;
+        this.lock = new Auth0Lock(
+            config.auth0.clientId,
+            config.auth0.domain,
+        )
         this.wireEvents();
         this.fetchFromDynamoDB();
     },
     wireEvents: function () {
+        UI.LoginButton.bindEvents(this.lock);
+        UI.LogoutButton.bindEvents();
+        UI.ProfileButton.bindEvents();
+
         UI.UploadButton.bindEvents(function(file){
             let url = this.config.apiBaseUrl + '/get_signed_url?content_type='+ encodeURI(file.type);
             let token = localStorage.getItem('userToken');
