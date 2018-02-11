@@ -140,7 +140,7 @@ let UI = {
     },
     UploadButton: {
         show: function() {
-            $('#upload-image-button').css('display', 'inline-block');
+            $('#upload-image-button').show();
             return this;
         },
         toggle: function(condition){
@@ -152,6 +152,11 @@ let UI = {
             return this;
         },
         bindEvents: function(onFileSelected){
+            $("#upload-image-button").on('click', function (event) {
+                $("#upload").trigger('click')
+                return event.preventDefault();
+            });
+
             $("#upload").on('change', function (event) {
                 let file = $('#upload').get(0).files[0];
                 let fileSizeMB = Math.round(100 * file.size / (1024 * 1024)) / 100;
