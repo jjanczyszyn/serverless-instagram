@@ -58,9 +58,8 @@ typings/
 .env
 
 local/*
-secrets.json
+backend/config-*.yml
 .serverless
 __pycache__/
 
 website/js/config.js
-website/js/vendor/

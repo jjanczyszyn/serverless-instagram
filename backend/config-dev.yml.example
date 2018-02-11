@@ -1,0 +1,7 @@
+---
+AUTH0_DOMAIN: auth0 domain
+AUTH0_SECRET: auth0 client secret
+AUTH0_AUDIENCE: auth0 client id
+METADATA_TABLE: unique dynamoDB table name
+UPLOAD_BUCKET: unique upload bucket name
+RESIZED_BUCKET: unique bucket name for resized images
