@@ -35,13 +35,13 @@ let AuthStorage = {
         localStorage.setItem('profile', JSON.stringify(profile, null, 4));
     },
     retrieve: function(){
-        var result = {
+        let result = {
             token: null,
             profile: null,
             profileJson: null
         };
-        var token = localStorage.getItem('userToken');
-        var profileJson = localStorage.getItem('profile');
+        let token = localStorage.getItem('userToken');
+        let profileJson = localStorage.getItem('profile');
         if (token) {
             result.token = token;
         }
@@ -63,7 +63,7 @@ let UI = {
     },
     UserProfile: {
         toggle: function(profile){
-            var showAuthenticationElements = !!profile;
+            let showAuthenticationElements = !!profile;
             if (showAuthenticationElements) {
                 $('#profilename').text(profile.nickname);
                 $('#profilepicture').attr('src', profile.picture);
@@ -83,7 +83,7 @@ let UI = {
         },
         bindEvents: function(auth0Lock){
             $('#auth0-login').click(function (event) {
-                var options = {
+                let options = {
                     authParams: {
                         scope: 'openid email user_metadata picture'
                     }
@@ -91,7 +91,7 @@ let UI = {
 
                 auth0Lock.show(options, function (err, profile, token) {
                     if (err) {
-                        var message = ['Failed to show auth0 dialog:', err + ""].join(' ');
+                        let message = ['Failed to show auth0 dialog:', err + ""].join(' ');
                         UI.showError(message);
                         return;
                     } else {
@@ -114,7 +114,7 @@ let UI = {
             $('#auth0-logout').on('click', function(event) {
                 AuthStorage.clear();
 
-                UI.LoginButton.toggle(false);
+                UI.LoginButton.toggle(true);
                 UI.LogoutButton.toggle(false);
 
                 UI.UploadButton.toggle(false);
@@ -130,7 +130,7 @@ let UI = {
         },
         bindEvents: function(){
             $("#user-profile").click(function (event) {
-                var data = AuthStorage.retrieve();
+                let data = AuthStorage.retrieve();
                 $('#user-profile-raw-json').text(data.profileJson);
                 $('#user-profile-modal').modal();
 
@@ -148,12 +148,12 @@ let UI = {
             return this;
         },
         hide: function() {
-            $('#upload-image-button').hide()
+            $('#upload-image-button').hide();
             return this;
         },
         bindEvents: function(onFileSelected){
             $("#upload-image-button").on('click', function (event) {
-                $("#upload").trigger('click')
+                $("#upload").trigger('click');
                 return event.preventDefault();
             });
 
@@ -165,7 +165,7 @@ let UI = {
                         "File cannot be greater than 1MB!",
                         "The file uploaded:",
                         "" + fileSizeMB + ""
-                    ].join(' ')
+                    ].join(' ');
 
                     UI.showError(message)
                 } else {
@@ -267,13 +267,13 @@ let Lambda = {
 let application = {
     config: null,
     init: function (config) {
-        var user = AuthStorage.retrieve();
+        let user = AuthStorage.retrieve();
 
         this.config = config;
         this.lock = new Auth0Lock(
             config.auth0.clientId,
             config.auth0.domain,
-        )
+        );
         this.wireEvents();
         this.fetchFromDynamoDB();
 
@@ -294,13 +294,9 @@ let application = {
         }.bind(this));
     },
     upload: function (file, data) {
-        // hide upload controls and show progress bar set to 0
-        UI.UploadButton.hide();
         UI.UploadProgress.show().reset();
 
         S3.uploadImage(data.url, file).then(function(data, textStatus){
-            // show upload controls and hide progress bar
-            UI.UploadButton.show();
             UI.UploadProgress.hide();
 
             switch (textStatus) {
