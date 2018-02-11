@@ -62,7 +62,7 @@ let UI = {
         alert(message);
     },
     UserProfile: {
-        show: function(profile){
+        toggle: function(profile){
             var showAuthenticationElements = !!profile;
             if (showAuthenticationElements) {
                 $('#profilename').text(profile.nickname);
@@ -71,6 +71,7 @@ let UI = {
 
             UI.LoginButton.toggle(!showAuthenticationElements);
             UI.LogoutButton.toggle(showAuthenticationElements);
+            UI.UploadButton.toggle(showAuthenticationElements);
             UI.ProfileButton.toggle(showAuthenticationElements);
         },
     },
@@ -94,7 +95,7 @@ let UI = {
                         return;
                     } else {
                         AuthStorage.store(token, profile);
-                        UI.UserProfile.show(profile);
+                        UI.UserProfile.toggle(profile);
                     }
                 });
 
@@ -138,9 +139,11 @@ let UI = {
     },
     UploadButton: {
         show: function() {
-            $('#upload-image-button')
-                .css('display', 'inline-block')
-                .show();
+            $('#upload-image-button').show().css('display', 'inline-block');
+            return this;
+        },
+        toggle: function(condition){
+            $('#upload-image-button').toggle(condition);
             return this;
         },
         hide: function() {
@@ -258,6 +261,8 @@ let Lambda = {
 let application = {
     config: null,
     init: function (config) {
+        var user = AuthStorage.retrieve();
+
         this.config = config;
         this.lock = new Auth0Lock(
             config.auth0.clientId,
@@ -265,6 +270,9 @@ let application = {
         )
         this.wireEvents();
         this.fetchFromDynamoDB();
+
+
+        UI.UserProfile.toggle(user.profile);
     },
     wireEvents: function () {
         UI.LoginButton.bindEvents(this.lock);
