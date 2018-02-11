@@ -73,6 +73,7 @@ let UI = {
             UI.LogoutButton.toggle(showAuthenticationElements);
             UI.UploadButton.toggle(showAuthenticationElements);
             UI.ProfileButton.toggle(showAuthenticationElements);
+            $("#user-profile-jumbotron").toggle(showAuthenticationElements)
         },
     },
     LoginButton: {
@@ -139,7 +140,7 @@ let UI = {
     },
     UploadButton: {
         show: function() {
-            $('#upload-image-button').show().css('display', 'inline-block');
+            $('#upload-image-button').css('display', 'inline-block');
             return this;
         },
         toggle: function(condition){

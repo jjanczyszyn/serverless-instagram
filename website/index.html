@@ -34,9 +34,9 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <div class="navbar-form navbar-right">
-            <span id="upload-image-button" class="btn btn-warning btn-file">
+            <button id="upload-image-button" class="btn btn-warning btn-file">
               <span class="glyphicon glyphicon-plus"></span> Upload &lambda; <input id="upload" type="file" name="file" accept="image/*">
-            </span>
+            </button>
             <button id="auth0-login" class="btn btn-warning">Sign in</button>
             <button id="auth0-logout" class="btn btn-warning">Sign Out</button>
           </div>
@@ -44,7 +44,7 @@
       </div>
     </nav>
 
-    <div class="jumbotron">
+    <div class="jumbotron" id="user-profile-jumbotron">
       <div id="hero" class="container">
         <div class="col-md-12 col-sm-12">
           <a id="user-profile">
