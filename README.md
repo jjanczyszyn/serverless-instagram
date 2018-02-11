@@ -25,7 +25,7 @@ A serverless image sharing application example using Serverless Framework
 2. `npm install`
 3. `sls -s <your-stage-name> deploy`
 
-## Website 
+## Website
 1. `cd website`
 2. Copy the API gateway base url into your `website/js/config.js` file.
 3. `npm install`
@@ -41,3 +41,26 @@ This workshop has been inspired by:
 
 The camera image has been taken from:
 http://vectips.com/tips-and-tricks/how-to-create-a-camera-icon/
+
+## Licensing
+
+This source code repository uses the MIT license and includes
+unmodified versions of open-source libraries whose licenses are
+either the same or compatible.
+
+Here is a list of libraries being distributed and respective their
+licenses.
+
+| Library           | License |
+| ----------------- | ------- |
+| Auth0-Lock 8.3.2  | [MIT](https://github.com/auth0/lock/blob/v8.3.2/LICENSE) |
+| Bootstrap 3.3.1   | [MIT](https://github.com/twbs/bootstrap/blob/v3.3.1/LICENSE) |
+| jQuery 1.11.2     | [MIT](https://jquery.org/license/) |
+| moment.js         | [MIT](https://github.com/moment/moment/blob/develop/LICENSE) |
+| modernizr         | [MIT](https://modernizr.com/license/)
+
+### NOTE:
+
+Some snippets of code were copied from various places in the internet,
+we made our best efforts to ensure that the original code and authors
+were referenced on the inline comments.
