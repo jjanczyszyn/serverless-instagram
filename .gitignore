@@ -61,3 +61,6 @@ local/*
 secrets.json
 .serverless
 __pycache__/
+
+website/js/config.js
+website/js/vendor/
