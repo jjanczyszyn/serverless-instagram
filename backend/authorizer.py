@@ -7,7 +7,7 @@ import os
 import re
 
 SECRET = os.environ['AUTH0_SECRET']
-AUDIENCE = os.environ['AUTH0_AUDIENCE']
+AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
 
 
 def handler(event, context):
@@ -18,7 +18,7 @@ def handler(event, context):
     token = auth_token.split(' ')[1]
 
     try:
-        payload = jwt.decode(token, SECRET, algorithms=['HS256'], audience=AUDIENCE)
+        payload = jwt.decode(token, SECRET, algorithms=['HS256'], audience=AUTH0_CLIENT_ID)
     except jwt.InvalidTokenError:
         raise Exception('Unauthorized')
     else:

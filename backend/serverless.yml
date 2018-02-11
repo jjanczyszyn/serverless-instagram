@@ -56,7 +56,7 @@ functions:
     handler: authorizer.handler
     environment:
       AUTH0_SECRET: ${self:custom.config.AUTH0_SECRET}
-      AUTH0_AUDIENCE: ${self:custom.config.AUTH0_AUDIENCE}
+      AUTH0_CLIENT_ID: ${self:custom.config.AUTH0_CLIENT_ID}
     package:
       include:
         - authorizer.py
