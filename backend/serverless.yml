@@ -1,4 +1,4 @@
-service: serverless-instagram
+service: serverless-instagram-no-resize
 
 # lock us to a pre-2.0 (not yet released) version of the serverless framework to protect us from breaking changes
 frameworkVersion: ">=1.16.0 <2.0.0"
@@ -8,8 +8,6 @@ plugins:
 
 custom:
     config: ${file(config.json)}
-    pythonRequirements:
-      dockerizePip: non-linux
 
 provider:
   name: aws
@@ -25,11 +23,6 @@ provider:
       Action:
         - s3:*
       Resource: arn:aws:s3:::${self:custom.config.UPLOAD_BUCKET}/*
-    - Effect: "Allow"
-      Action:
-        - s3:PutObject
-      Resource:
-        - arn:aws:s3:::${self:custom.config.RESIZED_BUCKET}/*
     - Effect: Allow
       Action:
         - logs:CreateLogGroup
@@ -95,33 +88,14 @@ functions:
           path: /list
           method: get
           cors: true
-  resize:
-    handler: image_resize.handler
-    environment:
-        RESIZED_BUCKET: ${self:custom.config.RESIZED_BUCKET}
-        UPLOAD_BUCKET: ${self:custom.config.UPLOAD_BUCKET}
-    package:
-      include:
-        - image_resize.py
 
 resources:
   Resources:
-    ResizePermissionUploadBucket:
-      DependsOn:
-        - ResizeLambdaFunction
-      Type: AWS::Lambda::Permission
-      Properties:
-        FunctionName:
-          "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
-        Action: "lambda:InvokeFunction"
-        Principal: "s3.amazonaws.com"
-        SourceArn: "arn:aws:s3:::${self:custom.config.UPLOAD_BUCKET}"
-
     UploadBucket:
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
       DependsOn:
-        - ResizePermissionUploadBucket
+        - PushMetadataPermissionUploadBucket
       Properties:
         BucketName: ${self:custom.config.UPLOAD_BUCKET}
         CorsConfiguration:
@@ -130,7 +104,6 @@ resources:
                 - "*"
               AllowedMethods:
                 - "GET"
-                - "POST"
                 - "PUT"
               AllowedHeaders:
                 - "*"
@@ -139,9 +112,9 @@ resources:
           LambdaConfigurations:
             - Event: "s3:ObjectCreated:*"
               Function:
-                "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
+                "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
 
-    PushMetadataPermissionResizedBucket:
+    PushMetadataPermissionUploadBucket:
       DependsOn:
         - MetadataLambdaFunction
       Type: AWS::Lambda::Permission
@@ -150,35 +123,7 @@ resources:
           "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
         Action: "lambda:InvokeFunction"
         Principal: "s3.amazonaws.com"
-        SourceArn: "arn:aws:s3:::${self:custom.config.RESIZED_BUCKET}"
-
-    ImageResizedBucket:
-      DependsOn:
-        - PushMetadataPermissionResizedBucket
-      Type: AWS::S3::Bucket
-      DeletionPolicy: Retain
-      Properties:
-        BucketName: ${self:custom.config.RESIZED_BUCKET}
-        NotificationConfiguration:
-          LambdaConfigurations:
-            - Event: "s3:ObjectCreated:*"
-              Function:
-                "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
-
-    ImageResizedBucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      DependsOn:
-        - ImageResizedBucket
-      Properties:
-        Bucket: ${self:custom.config.RESIZED_BUCKET}
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Sid: "AddPerm"
-              Effect: "Allow"
-              Principal: "*"
-              Action: "s3:GetObject"
-              Resource: "arn:aws:s3:::${self:custom.config.RESIZED_BUCKET}/*"
+        SourceArn: "arn:aws:s3:::${self:custom.config.UPLOAD_BUCKET}"
 
     MetadataTable:
       Type: 'AWS::DynamoDB::Table'
