@@ -7,15 +7,14 @@ plugins:
   - serverless-python-requirements
 
 custom:
-    config: ${file(config-${opt:stage}.yml)}
-  pythonRequirements:
+    config: ${file(config.json)}
+    pythonRequirements:
       dockerizePip: non-linux
 
 provider:
   name: aws
   region: us-east-1
   runtime: python3.6
-  stage: dev
   memorySize: 128
   iamRoleStatements:
     - Effect: Allow
@@ -51,10 +50,6 @@ package:
   individually: true
   exclude:
     - '*/**'
-#  include:
-#    - common
-#    - common/response.py
-#    - common/__init__.py
 
 functions:
   auth:

@@ -58,7 +58,7 @@ typings/
 .env
 
 local/*
-backend/config-*.yml
+backend/config.json
 .serverless
 __pycache__/
 
