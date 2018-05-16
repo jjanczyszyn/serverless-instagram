@@ -9,28 +9,31 @@ A serverless image sharing application example using Serverless Framework
 
 # Setup
 ## Dependencies
-* AWS Account
+* AWS Account + user with API keys with the appropriate policy ([policy template](aws-policy-for-serverless.json))
 * Auth0 Account
 * Docker (only for Mac and Windows)
 * AWS CLI [https://aws.amazon.com/cli/](https://aws.amazon.com/cli/)
-* Node 6.10.x
+* Node > 6 (tested with 6 and 8)
+* `npm install serverless -g`
 
-## Configuration Steps
+## Back-end Configuration Steps
 1. Install the dependencies listed above.
-2. Create a configuration file for your stage in the [`backend`](backend) directory based on the example config [`config.json.example`](backend/config.json.example) named config.json
-5. In the [`website/js`](website/js) directory create a `config.js` file based on the [`config.js.example`](website/config.js.example) file given.
+2. Create a configuration file in the [`backend`](backend) directory based on the example config [`config.json.example`](backend/config.json.example) named config.json
 
-## Backend deployment steps
+## Back-end deployment steps
 1. `cd backend`
 2. `npm install`
 3. `sls deploy`
 
+## Website Configuration Steps
+1. In the [`website/js`](website/js) directory create a `config.js` file based on the [`config.js.example`](website/config.js.example) file given.
+2. Copy the API gateway base url (e.g. https://xx.execute-api.us-east-1.amazonaws.com/dev) into `apiBaseUrl` in your `website/js/config.js` file.
+
 ## Website
 1. `cd website`
-2. Copy the API gateway base url into your `website/js/config.js` file.
-3. `npm install`
-4. `npm run start`
-5. Open your browser to [http://localhost:8100](http://localhost:8100)
+2. `npm install`
+3. `npm start`
+4. Open your browser to [http://localhost:8100](http://localhost:8100)
 
 
 ## Credits:
