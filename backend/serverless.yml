@@ -1,8 +1,5 @@
 service: serverless-instagram
 
-# lock us to a pre-2.0 (not yet released) version of the serverless framework to protect us from breaking changes
-frameworkVersion: ">=1.16.0 <2.0.0"
-
 plugins:
   - serverless-python-requirements
 
@@ -75,6 +72,7 @@ functions:
           cors: true
           method: get
           authorizer: auth
+
   metadata:
     handler: add_metadata.handler
     environment:
@@ -82,6 +80,7 @@ functions:
     package:
       include:
         - add_metadata.py
+
   list:
     handler: list_metadata.handler
     environment:
@@ -95,6 +94,7 @@ functions:
           path: /list
           method: get
           cors: true
+
   resize:
     handler: image_resize.handler
     environment:
