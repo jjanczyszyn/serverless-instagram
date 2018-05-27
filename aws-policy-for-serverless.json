@@ -12,7 +12,7 @@
         "cloudformation:UpdateStack",
         "cloudformation:DeleteStack"
       ],
-      "Resource": "arn:aws:cloudformation:<region>:<account id>:stack/<service name>*/*"
+      "Resource": "arn:aws:cloudformation:us-east-1:*:stack/serverless-instagram*/*"
     },
     {
       "Effect": "Allow",
@@ -52,7 +52,7 @@
       "Action": [
         "logs:DescribeLogGroups"
       ],
-      "Resource": "arn:aws:logs:<region>:<account id>:log-group::log-stream:*"
+      "Resource": "arn:aws:logs:us-east-1:*:log-group::log-stream:*"
     },
     {
       "Action": [
@@ -63,7 +63,7 @@
         "logs:DescribeLogStreams",
         "logs:FilterLogEvents"
       ],
-      "Resource": "arn:aws:logs:<region>:<account id>:log-group:/aws/lambda/<service name>*:log-stream:*",
+      "Resource": "arn:aws:logs:us-east-1:*:log-group:/aws/lambda/serverless-instagram*:log-stream:*",
       "Effect": "Allow"
     },
     {
@@ -79,7 +79,7 @@
         "iam:DeleteRolePolicy"
       ],
       "Resource": [
-        "arn:aws:iam::<account id>:role/<service name>*-lambdaRole"
+        "arn:aws:iam::*:role/serverless-instagram*-lambdaRole"
       ]
     },
     {
@@ -91,7 +91,7 @@
         "apigateway:DELETE"
       ],
       "Resource": [
-        "arn:aws:apigateway:<region>::/restapis"
+        "arn:aws:apigateway:us-east-1::/restapis"
       ]
     },
     {
@@ -103,7 +103,7 @@
         "apigateway:DELETE"
       ],
       "Resource": [
-        "arn:aws:apigateway:<region>::/restapis/*"
+        "arn:aws:apigateway:us-east-1::/restapis/*"
       ]
     },
     {
@@ -125,7 +125,7 @@
         "lambda:InvokeFunction"
       ],
       "Resource": [
-        "arn:aws:lambda:*:<account id>:function:<service name>*"
+        "arn:aws:lambda:*:*:function:serverless-instagram*"
       ]
     },
     {
@@ -147,7 +147,7 @@
         "events:Delete*",
         "events:Describe*"
       ],
-      "Resource": "arn:aws:events::<account id>:rule/<service name>*"
+      "Resource": "arn:aws:events::*:rule/serverless-instagram*"
     },
         {
             "Effect": "Allow",
@@ -156,7 +156,7 @@
                 "dynamodb:Query"
             ],
             "Resource": [
-                "arn:aws:dynamodb:<region>:<account id>:table/*/index/*"
+                "arn:aws:dynamodb:us-east-1:*:table/*/index/*"
             ]
         },
         {
@@ -181,7 +181,7 @@
                 "dynamodb:UpdateTable"
             ],
             "Resource": [
-                "arn:aws:dynamodb:<region>:<account id>:table/*"
+                "arn:aws:dynamodb:us-east-1:*:table/*"
             ]
         }
   ]
