@@ -1,0 +1,31 @@
+service: serverless-instagram-pyconcz
+
+custom:
+    config: ${file(config.json)}
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.6
+  memorySize: 128
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+
+package:
+  individually: true
+
+functions:
+  authorizer:
+    module: authorizer
+    handler: authorizer.handler
+    environment:
+      AUTH0_SECRET: ${self:custom.config.AUTH0_SECRET}
+      AUTH0_CLIENT_ID: ${self:custom.config.AUTH0_CLIENT_ID}
+
+plugins:
+  - serverless-python-requirements

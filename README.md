@@ -1,3 +1,20 @@
+# serverless-instagram
+
+A serverless image sharing application example using Serverless Framework
+
+# Disclaimer
+**These steps are for linux or OSX systems. All of this is achievable using Windows but those instructions have not been provided.**
+
+**This is only a demo and is not production ready.**
+
+## Dependencies
+* AWS Account + user with API keys with the appropriate policy ([policy template](aws-policy-for-serverless.json))
+* Auth0 Account (info on how to set it up -> [auth0.md](docs/auth0.md))
+* Docker (only for Mac and Windows)
+* AWS CLI [https://aws.amazon.com/cli/](https://aws.amazon.com/cli/)
+* Node > 6 (tested with 6 and 8)
+* `npm install serverless -g`
+
 ## Authentication
 
 1. To set up the website `cd front-end` and follow instructions in [readme](front-end/readme.md).
