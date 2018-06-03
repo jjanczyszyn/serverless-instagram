@@ -26,6 +26,10 @@ provider:
         - logs:CreateLogStream
         - logs:PutLogEvents
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.config.IMAGE_INFO_TABLE_NAME}"
 
 package:
   individually: true
@@ -50,11 +54,30 @@ functions:
           path: /get_signed_url
           authorizer: authorizer
 
+  addImageInfo:
+    module: image_info
+    handler: add_image_info.handler
+    environment:
+        IMAGE_INFO_TABLE_NAME: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
+
 resources:
   Resources:
+    AddImageInfoLambdaInvokationPermission:
+      DependsOn:
+        - AddImageInfoLambdaFunction
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
+        Action: "lambda:InvokeFunction"
+        Principal: "s3.amazonaws.com"
+        SourceArn: "arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}"
+
     UploadBucket:
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
+      DependsOn:
+        - AddImageInfoLambdaInvokationPermission
       Properties:
         BucketName: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
         CorsConfiguration:
@@ -66,3 +89,26 @@ resources:
               AllowedHeaders:
                 - "*"
               MaxAge: 3000
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: "s3:ObjectCreated:*"
+              Function:
+                "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
+
+    ImageInfoTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: user
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: user
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
