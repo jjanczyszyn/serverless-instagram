@@ -1,28 +1,63 @@
 {
-    "ResponseMetadata": {
-        "RequestId": "34421FA4FBB4EA74",
-        "HostId": "<host id>",
-        "HTTPStatusCode": 200,
-        "HTTPHeaders": {
-            "x-amz-id-2": "<host id>",
-            "x-amz-request-id": "34421FA4FBB4EA74",
-            "date": "Sun, 03 Jun 2018 07:43:22 GMT",
-            "last-modified": "Sun, 03 Jun 2018 07:43:21 GMT",
-            "etag": "99ad32b677e0c162b1b51eaefef24245",
-            "x-amz-meta-user": "<email>",
-            "accept-ranges": "bytes",
-            "content-type": "image/jpeg",
-            "content-length": "201150",
-            "server": "AmazonS3"
-        },
-        "RetryAttempts": 0
+    "resource": "/list_images",
+    "path": "/list_images",
+    "httpMethod": "GET",
+    "headers": {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9,pl;q=0.8",
+        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6Imp1c3R5bmFqYW5jenlzenluQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaWN0dXJlIjoiaHR0cHM6Ly9zLmdyYXZhdGFyLmNvbS9hdmF0YXIvMTE3MTQ5OWQxZmY2N2Q5Mzg2ZGYwZmFiMmEyOWJlOTI_cz00ODAmcj1wZyZkPWh0dHBzJTNBJTJGJTJGY2RuLmF1dGgwLmNvbSUyRmF2YXRhcnMlMkZqdS5wbmciLCJpc3MiOiJodHRwczovL2pqYW5jenlzenluLmF1dGgwLmNvbS8iLCJzdWIiOiJhdXRoMHw1YTdmYWEyNjY5MzdjMTczNzU1Mzg0YTMiLCJhdWQiOiJGNDRzVWN4cDBpVEJKU2xZU3lDbVByNjhXT3lVYmJFYyIsImlhdCI6MTUyNzk5MzYzNSwiZXhwIjoxNTI4MDI5NjM1fQ.1zB3CzPTvaDk7rkOeMiArCoL6u6HZfVO3XCoFA1xvKs",
+        "CloudFront-Forwarded-Proto": "https",
+        "CloudFront-Is-Desktop-Viewer": "true",
+        "CloudFront-Is-Mobile-Viewer": "false",
+        "CloudFront-Is-SmartTV-Viewer": "false",
+        "CloudFront-Is-Tablet-Viewer": "false",
+        "CloudFront-Viewer-Country": "CZ",
+        "Host": "an5t6h80l1.execute-api.us-east-1.amazonaws.com",
+        "origin": "http://127.0.0.1:8100",
+        "Referer": "http://127.0.0.1:8100/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+        "Via": "2.0 bb3d4141f7dae330940ff3eb0f8b4891.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "5iDZqkIFc_QjqcHVrdV9_UB8d8QEboMCd0KIiOgeHTtOQUrpP6XX2g==",
+        "X-Amzn-Trace-Id": "Root=1-5b135814-44bd097810fcf9749b175070",
+        "X-Forwarded-For": "90.181.38.70, 54.182.255.14",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https"
     },
-    "AcceptRanges": "bytes",
-    "LastModified": "some date",
-    "ContentLength": 201150,
-    "ETag": "99ad32b677e0c162b1b51eaefef24245",
-    "ContentType": "image/jpeg",
-    "Metadata": {
-        "user": "<email>"
-    }
+    "queryStringParameters": null,
+    "pathParameters": null,
+    "stageVariables": null,
+    "requestContext": {
+        "resourceId": "rn4sn0",
+        "authorizer": {
+            "user_id": "justynajanczyszyn@gmail.com",
+            "principalId": "justynajanczyszyn@gmail.com"
+        },
+        "resourcePath": "/list_images",
+        "httpMethod": "GET",
+        "extendedRequestId": "H4qzIEHYoAMFkLQ=",
+        "requestTime": "03/Jun/2018:02:53:08 +0000",
+        "path": "/dev/list_images",
+        "accountId": "038979314594",
+        "protocol": "HTTP/1.1",
+        "stage": "dev",
+        "requestTimeEpoch": 1527994388057,
+        "requestId": "3eb1b508-66d9-11e8-8f1a-31a3df04578f",
+        "identity": {
+            "cognitoIdentityPoolId": null,
+            "accountId": null,
+            "cognitoIdentityId": null,
+            "caller": null,
+            "sourceIp": "90.181.38.70",
+            "accessKey": null,
+            "cognitoAuthenticationType": null,
+            "cognitoAuthenticationProvider": null,
+            "userArn": null,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+            "user": null
+        },
+        "apiId": "an5t6h80l1"
+    },
+    "body": null,
+    "isBase64Encoded": false
 }

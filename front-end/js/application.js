@@ -47,6 +47,7 @@ let UI = {
                     } else {
                         AuthStorage.store(token, profile);
                         UI.UserProfile.toggle(profile);
+                        application.fetchFromDynamoDB();
                     }
                 });
 
@@ -69,6 +70,7 @@ let UI = {
                 UI.LogoutButton.toggle(false);
                 UI.UploadButton.toggle(false);
                 UI.ProfileButton.toggle(false);
+                UI.Gallery.hide();
                 return event.preventDefault();
             });
         }
@@ -132,6 +134,28 @@ let UI = {
             });
         }
     },
+    Image: {
+        add: function(data) {
+            let info = ImageCardHelper.extractInformation(data);
+            $card = ImageCardHelper.render(info.url, info.description);
+            UI.Gallery.add($card);
+            return this;
+        }
+    },
+    Gallery: {
+        hide: function(){
+            $('#image-list').hide();
+            return this;
+        },
+        add: function($card) {
+            $('#image-list').append($card);
+            return this;
+        },
+        clear: function() {
+            $('#image-list').empty();
+            return this;
+        }
+    },
     UploadProgress: {
         show: function(){
             $('#upload-progress').show();
@@ -148,6 +172,37 @@ let UI = {
             $('#upload-progress').find('.progress-bar').css('width', percentage + '%');
             return this;
         }
+    }
+};
+
+let ImageCardHelper = {
+    render: function(url, description){
+        let $new = $('#image-template').clone().attr({
+            'id': url,
+        }).show();
+
+        $new.find('img').attr('src', url).show();
+        $new.find('.metadata').text(description);
+        return $new;
+    },
+    extractInformation(data) {
+        /** prepare image information **/
+
+        // parse date from unix timestamp
+        let uploadDate = moment(data.createdAt, 'x');
+
+        // extract username from email
+        let username = data.user.split('@', 1)[0];
+
+        // generate a description
+        let description = [uploadDate.fromNow(), 'by', username].join(' ');
+
+        // return the final result
+        let result = {
+            url: data.image,
+            description: description
+        };
+        return result;
     }
 };
 
@@ -190,6 +245,17 @@ let Lambda = {
             }
         })
 
+    },
+    getImageListFromDynamoDB: function(url, accessToken){
+        return $.ajax({
+            url: url,
+            type: 'GET',
+            processData: false,
+            beforeSend: function(xhr) {
+                let bearer = ['Bearer', accessToken].join(' ');
+                xhr.setRequestHeader('Authorization', bearer);
+            }
+        })
     }
 };
 
@@ -205,6 +271,7 @@ let application = {
         );
         this.wireEvents();
         if(user){
+            this.fetchFromDynamoDB();
             UI.UserProfile.toggle(user.profile);
         };
         new ClipboardJS('#clippy', {
@@ -231,6 +298,9 @@ let application = {
 
             switch (textStatus) {
                 case 'success':
+                    setTimeout(function(){
+                        this.fetchFromDynamoDB();
+                    }.bind(this), 5000);
                     break;
                 case 'error':
                 case 'timeout':
@@ -241,5 +311,16 @@ let application = {
                     break;
             }
         }.bind(this));
+    },
+    fetchFromDynamoDB: function () {
+        let url = this.config.apiBaseUrl + '/list_images';
+        let token = localStorage.getItem('token');
+
+        Lambda.getImageListFromDynamoDB(url, token).then(function (images, status) {
+            UI.Gallery.clear();
+            $.each(images, function(index, data) {
+                UI.Image.add(data);
+            });
+        });
     }
 };

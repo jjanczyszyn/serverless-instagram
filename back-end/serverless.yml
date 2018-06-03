@@ -28,6 +28,9 @@ provider:
       Resource: "*"
     - Effect: Allow
       Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
         - dynamodb:PutItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.config.IMAGE_INFO_TABLE_NAME}"
 
@@ -59,6 +62,18 @@ functions:
     handler: add_image_info.handler
     environment:
         IMAGE_INFO_TABLE_NAME: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
+
+  listImages:
+    module: image_list
+    handler: list_images.handler
+    environment:
+        IMAGE_INFO_TABLE_NAME: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
+    events:
+      - http:
+          cors: true
+          method: get
+          path: /list_images
+          authorizer: authorizer
 
 resources:
   Resources:
