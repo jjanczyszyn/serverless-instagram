@@ -5,6 +5,8 @@ plugins:
 
 custom:
     config: ${file(config.json)}
+    pythonRequirements:
+      dockerizePip: non-linux
 
 provider:
   name: aws
@@ -20,6 +22,11 @@ provider:
       Action:
         - s3:*
       Resource: arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}/*
+    - Effect: "Allow"
+      Action:
+        - s3:PutObject
+      Resource:
+        - arn:aws:s3:::${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}/*
     - Effect: Allow
       Action:
         - logs:CreateLogGroup
@@ -50,6 +57,9 @@ functions:
     handler: generate_signed_url.handler
     environment:
       UPLOAD_IMAGE_BUCKET_NAME: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
+    package:
+      include:
+        - common/*
     events:
       - http:
           cors: true
@@ -68,6 +78,9 @@ functions:
     handler: list_images.handler
     environment:
         IMAGE_INFO_TABLE_NAME: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
+    package:
+      include:
+        - common/*
     events:
       - http:
           cors: true
@@ -75,15 +88,22 @@ functions:
           path: /list_images
           authorizer: authorizer
 
+  resize:
+    module: image_resize
+    handler: image_resize.handler
+    environment:
+        UPLOAD_IMAGE_BUCKET_NAME: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
+        RESIZED_IMAGE_BUCKET_NAME: ${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}
+
 resources:
   Resources:
-    AddImageInfoLambdaInvokationPermission:
+    ResizeLambdaInvokationPermission:
       DependsOn:
-        - AddImageInfoLambdaFunction
+        - ResizeLambdaFunction
       Type: AWS::Lambda::Permission
       Properties:
         FunctionName:
-          "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
+          "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
         Action: "lambda:InvokeFunction"
         Principal: "s3.amazonaws.com"
         SourceArn: "arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}"
@@ -92,7 +112,7 @@ resources:
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
       DependsOn:
-        - AddImageInfoLambdaInvokationPermission
+        - ResizeLambdaInvokationPermission
       Properties:
         BucketName: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
         CorsConfiguration:
@@ -108,7 +128,46 @@ resources:
           LambdaConfigurations:
             - Event: "s3:ObjectCreated:*"
               Function:
+                "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
+
+    AddImageInfoLambdaInvokationPermission:
+      DependsOn:
+        - AddImageInfoLambdaFunction
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
+        Action: "lambda:InvokeFunction"
+        Principal: "s3.amazonaws.com"
+        SourceArn: "arn:aws:s3:::${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}"
+
+    ResizedImageBucket:
+      DependsOn:
+        - AddImageInfoLambdaInvokationPermission
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      Properties:
+        BucketName: ${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: "s3:ObjectCreated:*"
+              Function:
                 "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
+
+    ResizedImageBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      DependsOn:
+        - ResizedImageBucket
+      Properties:
+        Bucket: ${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "AddPerm"
+              Effect: "Allow"
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: "arn:aws:s3:::${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}/*"
 
     ImageInfoTable:
       Type: 'AWS::DynamoDB::Table'
