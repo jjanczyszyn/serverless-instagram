@@ -4,16 +4,12 @@ let AuthStorage = {
         localStorage.setItem('profile', JSON.stringify(profile, null, 4));
     },
     retrieve: function(){
-        let result = {
-            token: null,
-            profile: null,
-            profileJson: null
-        };
+        let result = {};
         let token = localStorage.getItem('token');
         let profileJson = localStorage.getItem('profile');
         if (token) {
             result.token = token;
-        }
+        } else { return }
         if (profileJson) {
             result.profileJson = profileJson;
             result.profile = JSON.parse(profileJson);
@@ -69,7 +65,9 @@ let UI = {
                 AuthStorage.clear();
 
                 UI.LoginButton.toggle(true);
+
                 UI.LogoutButton.toggle(false);
+                UI.UploadButton.toggle(false);
                 UI.ProfileButton.toggle(false);
                 return event.preventDefault();
             });
@@ -81,7 +79,7 @@ let UI = {
             return this;
         },
         bindEvents: function(){
-            $("#user-profile").click(function (event) {
+            $('#user-profile').click(function (event) {
                 let data = AuthStorage.retrieve();
                 $('#user-profile-raw-json').text(data.profileJson);
                 $('#user-token').text(data.token);
@@ -93,27 +91,112 @@ let UI = {
     },
     UserProfile: {
         toggle: function(profile){
-            let showAuthenticationElements = !!profile;
-            if (showAuthenticationElements) {
+            let authenticated = !!profile;
+            if (authenticated) {
                 $('#profilename').text(profile.nickname);
                 $('#profilepicture').attr('src', profile.picture);
             }
 
-            UI.LoginButton.toggle(!showAuthenticationElements);
-            UI.LogoutButton.toggle(showAuthenticationElements);
-            UI.ProfileButton.toggle(showAuthenticationElements);
-            $("#user-profile-jumbotron").toggle(showAuthenticationElements);
+            UI.LoginButton.toggle(!authenticated);
+            UI.LogoutButton.toggle(authenticated);
+            UI.UploadButton.toggle(authenticated);
+            UI.ProfileButton.toggle(authenticated);
+            $('#user-profile-jumbotron').toggle(authenticated);
         },
     },
+    UploadButton: {
+        toggle: function(condition){
+            $('#upload-image-button').toggle(condition);
+            return this;
+        },
+        bindEvents: function(onFileSelected){
+            $('#upload-image-button').on('click', function (event) {
+                $('#upload').trigger('click');
+                return event.preventDefault();
+            });
+
+            $('#upload').on('change', function (event) {
+                let file = $('#upload').get(0).files[0];
+                let fileSizeMB = Math.round(100 * file.size / (1024 * 1024)) / 100;
+                if(fileSizeMB > 1){
+                    let message = [
+                        'File cannot be greater than 1MB!',
+                        'The file uploaded:',
+                        ' + fileSizeMB + '
+                    ].join(' ');
+
+                    UI.showError(message)
+                } else {
+                    onFileSelected(file)
+                }
+            });
+        }
+    },
+    UploadProgress: {
+        show: function(){
+            $('#upload-progress').show();
+            return this;
+        },
+        hide: function(){
+            $('#upload-progress').hide();
+            return this;
+        },
+        reset: function() {
+            return this.update(0)
+        },
+        update: function(percentage) {
+            $('#upload-progress').find('.progress-bar').css('width', percentage + '%');
+            return this;
+        }
+    }
+};
+
+let HttpRequest = {
+    handleProgress: function(evt) {
+        let percentage = evt.loaded / evt.total * 100;
+        UI.UploadProgress.update(percentage);
+    },
+    factory: function() {
+        let xhr = $.ajaxSettings.xhr();
+        xhr.addEventListener('progress', HttpRequest.handleProgress);
+        xhr.upload.addEventListener('progress', HttpRequest.handleProgress);
+        return xhr;
+    }
+};
+
+let S3 = {
+    uploadImage: function(signedUrl, file) {
+        return $.ajax({
+            url: signedUrl,
+            type: 'PUT',
+            data: file,
+            processData: false,
+            contentType: file.type,
+            beforeSend: function(xhr) {
+            },
+            xhr: HttpRequest.factory,
+        })
+    }
+};
+
+let Lambda = {
+    getSignedS3Url: function(url, accessToken) {
+        return $.ajax({
+            url: url,
+            type: 'GET',
+            beforeSend: function(xhr) {
+                let bearer = ['Bearer', accessToken].join(' ');
+                xhr.setRequestHeader('Authorization', bearer);
+            }
+        })
+
+    }
 };
 
 let application = {
     config: null,
     init: function (config) {
         let user = AuthStorage.retrieve();
-        new ClipboardJS('#clippy', {
-            container: document.getElementById('user-profile-modal')
-        });
 
         this.config = config;
         this.lock = new Auth0Lock(
@@ -121,11 +204,42 @@ let application = {
             config.auth0.domain
         );
         this.wireEvents();
-        UI.UserProfile.toggle(user.profile);
+        if(user){
+            UI.UserProfile.toggle(user.profile);
+        };
+        new ClipboardJS('#clippy', {
+            container: document.getElementById('user-profile-modal')
+        });
     },
     wireEvents: function () {
         UI.LoginButton.bindEvents(this.lock);
         UI.LogoutButton.bindEvents();
         UI.ProfileButton.bindEvents();
+        UI.UploadButton.bindEvents(function(file){
+            let url = this.config.apiBaseUrl + '/get_signed_url?content_type='+ encodeURI(file.type);
+            let token = localStorage.getItem('token');
+            Lambda.getSignedS3Url(url, token).then(function(data, textStatus){
+                this.upload(file, data)
+            }.bind(this));
+        }.bind(this));
+    },
+    upload: function (file, data) {
+        UI.UploadProgress.show().reset();
+
+        S3.uploadImage(data.url, file).then(function(data, textStatus){
+            UI.UploadProgress.hide();
+
+            switch (textStatus) {
+                case 'success':
+                    break;
+                case 'error':
+                case 'timeout':
+                case 'parsererror':
+                case 'abort':
+                default:
+                    UI.showError('failed to upload');
+                    break;
+            }
+        }.bind(this));
     }
 };

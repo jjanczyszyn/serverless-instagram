@@ -1,5 +1,0 @@
-{
-    "type": "TOKEN",
-    "methodArn": "arn:aws:execute-api:<aws region>:<aws account id>:<api gateway id>/<stage>/<HTTP method>/<endpoint>", 
-    "authorizationToken": "Bearer <your Auth0 token>"
-}

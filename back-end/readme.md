@@ -1,9 +1,8 @@
-## Authorization with Auth0
+## Image Upload
 
-1. Create a configuration file named config.json, use [the example config](config.json.example).
+1. Copy previous configuration file to the current directory `cp ../1-authorization/config.json .` and add **_UPLOAD_IMAGE_BUCKET_NAME_** like in [the example config](config.json.example). (note: s3 bucket names need to be unique across all AWS! To avoid conflicts use something like: "serverless-instagram-\<your name>")
 2. Run `sls deploy`.
-3. Create an event file named event.json, use [the example event](event.json.example). Substitute **_\<your Auth0 token>_** with the token you copied from auth0 user information while following instructions in [front-end/ readme](../front-end/readme.md).
-4. Run `sls invoke -f authorizer -p event.json`
+3. Run `sls invoke -f authorizer -p event.json`
 
 
 <img width="672" alt="screen shot 2018-06-02 at 15 33 52" src="https://user-images.githubusercontent.com/4153982/40877297-e25b8054-667e-11e8-917c-81e61ca0601c.png">

@@ -1,0 +1,65 @@
+{
+    "resource": "/get_signed_url",
+    "path": "/get_signed_url",
+    "httpMethod": "GET",
+    "headers": {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9,pl;q=0.8",
+        "Authorization": "Bearer <Auth0 token>",
+        "CloudFront-Forwarded-Proto": "https",
+        "CloudFront-Is-Desktop-Viewer": "true",
+        "CloudFront-Is-Mobile-Viewer": "false",
+        "CloudFront-Is-SmartTV-Viewer": "false",
+        "CloudFront-Is-Tablet-Viewer": "false",
+        "CloudFront-Viewer-Country": "CZ",
+        "Host": "an5t6h80l1.execute-api.us-east-1.amazonaws.com",
+        "origin": "http://127.0.0.1:8100",
+        "Referer": "http://127.0.0.1:8100/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+        "Via": "2.0 a83878ab138bfe1ba334c102434a7924.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "yjaLZgDQmxgn_nckelSuZYdLh1lSW0RYizyHulAkASiR0i7Ydu8cNQ==",
+        "X-Amzn-Trace-Id": "Root=1-5b137741-cf24be8e8d19a0103ea5fa90",
+        "X-Forwarded-For": "90.181.38.70, 54.182.255.75",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https"
+    },
+    "queryStringParameters": {
+        "content_type": "image/jpeg"
+    },
+    "pathParameters": null,
+    "stageVariables": null,
+    "requestContext": {
+        "resourceId": "55zp3p",
+        "authorizer": {
+            "user_id": "<user email>",
+            "principalId": "<user email>"
+        },
+        "resourcePath": "/get_signed_url",
+        "httpMethod": "GET",
+        "extendedRequestId": "H4-SRHpioAMFmwA=",
+        "requestTime": "03/Jun/2018:05:06:09 +0000",
+        "path": "/dev/get_signed_url",
+        "accountId": "038979314594",
+        "protocol": "HTTP/1.1",
+        "stage": "dev",
+        "requestTimeEpoch": 1528002369792,
+        "requestId": "d42dd0e4-66eb-11e8-b849-8b112d3f8cc7",
+        "identity": {
+            "cognitoIdentityPoolId": null,
+            "accountId": null,
+            "cognitoIdentityId": null,
+            "caller": null,
+            "sourceIp": "<some ip>",
+            "accessKey": null,
+            "cognitoAuthenticationType": null,
+            "cognitoAuthenticationProvider": null,
+            "userArn": null,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
+            "user": null
+        },
+        "apiId": "an5t6h80l1"
+    },
+    "body": null,
+    "isBase64Encoded": false
+}

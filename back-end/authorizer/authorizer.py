@@ -20,7 +20,7 @@ def handler(event, context):
     try:
         payload = jwt.decode(token, SECRET, algorithms=['HS256'], audience=AUTH0_CLIENT_ID)
     except jwt.InvalidTokenError:
-        raise Exception('Invalid token')
+        raise Exception('Unauthorized')
     else:
         return get_auth_response(payload['email'], event)
 

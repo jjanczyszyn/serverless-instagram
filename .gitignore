@@ -64,7 +64,6 @@ __pycache__/
 
 front-end/js/config.js
 back-end/config.json
-back-end/event.json
 yarn.lock
 
 */js/config.js

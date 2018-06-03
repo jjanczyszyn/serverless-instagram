@@ -1,5 +1,8 @@
 service: serverless-instagram-pyconcz
 
+plugins:
+  - serverless-python-requirements
+
 custom:
     config: ${file(config.json)}
 
@@ -9,6 +12,14 @@ provider:
   runtime: python3.6
   memorySize: 128
   iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}/*
     - Effect: Allow
       Action:
         - logs:CreateLogGroup
@@ -27,5 +38,31 @@ functions:
       AUTH0_SECRET: ${self:custom.config.AUTH0_SECRET}
       AUTH0_CLIENT_ID: ${self:custom.config.AUTH0_CLIENT_ID}
 
-plugins:
-  - serverless-python-requirements
+  signedUrl:
+    module: signed_url
+    handler: generate_signed_url.handler
+    environment:
+      UPLOAD_IMAGE_BUCKET_NAME: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
+    events:
+      - http:
+          cors: true
+          method: get
+          path: /get_signed_url
+          authorizer: authorizer
+
+resources:
+  Resources:
+    UploadBucket:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      Properties:
+        BucketName: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - "*"
+              AllowedMethods:
+                - "PUT"
+              AllowedHeaders:
+                - "*"
+              MaxAge: 3000
