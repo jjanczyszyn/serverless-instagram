@@ -9,7 +9,7 @@ let AuthStorage = {
         let profileJson = localStorage.getItem('profile');
         if (token) {
             result.token = token;
-        } else { return }
+        } else { return; }
         if (profileJson) {
             result.profileJson = profileJson;
             result.profile = JSON.parse(profileJson);
@@ -38,18 +38,7 @@ let UI = {
                         scope: 'openid email user_metadata picture'
                     }
                 };
-
-                auth0Lock.show(options, function (err, profile, token) {
-                    if (err) {
-                        let message = ['Failed to show auth0 dialog:', err + ''].join(' ');
-                        UI.showError(message);
-                        return;
-                    } else {
-                        AuthStorage.store(token, profile);
-                        UI.UserProfile.toggle(profile);
-                        application.fetchFromDynamoDB();
-                    }
-                });
+                auth0Lock.show(options);
 
                 return event.preventDefault();
             });
@@ -127,9 +116,9 @@ let UI = {
                         ' + fileSizeMB + '
                     ].join(' ');
 
-                    UI.showError(message)
+                    UI.showError(message);
                 } else {
-                    onFileSelected(file)
+                    onFileSelected(file);
                 }
             });
         }
@@ -262,21 +251,35 @@ let Lambda = {
 let application = {
     config: null,
     init: function (config) {
-        let user = AuthStorage.retrieve();
-
         this.config = config;
         this.lock = new Auth0Lock(
             config.auth0.clientId,
             config.auth0.domain
         );
+        this.lock.on("authenticated", function(authResult) {
+            application.lock.getUserInfo(authResult.accessToken, function(error, profile) {
+              if (error) {
+                let message = ['Failed to show auth0 dialog:', error + ''].join(' ');
+                UI.showError(message);
+                return;
+              }
+              // Save token and profile locally
+              AuthStorage.store(authResult.idToken, profile);
+              application.wireProfile(profile);
+            });
+        });
         this.wireEvents();
+        let user = AuthStorage.retrieve();
         if(user){
-            this.fetchFromDynamoDB();
-            UI.UserProfile.toggle(user.profile);
-        };
+            this.wireProfile(user.profile);
+        }
         new ClipboardJS('#clippy', {
             container: document.getElementById('user-profile-modal')
         });
+    },
+    wireProfile: function (profile) {
+        this.fetchFromDynamoDB();
+        UI.UserProfile.toggle(profile);
     },
     wireEvents: function () {
         UI.LoginButton.bindEvents(this.lock);
@@ -286,7 +289,7 @@ let application = {
             let url = this.config.apiBaseUrl + '/get_signed_url?content_type='+ encodeURI(file.type);
             let token = localStorage.getItem('token');
             Lambda.getSignedS3Url(url, token).then(function(data, textStatus){
-                this.upload(file, data)
+                this.upload(file, data);
             }.bind(this));
         }.bind(this));
     },
