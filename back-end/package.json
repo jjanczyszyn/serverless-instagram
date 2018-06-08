@@ -1,0 +1,9 @@
+{
+  "name": "serverless-instagram",
+  "description": "Serverless Instagram",
+  "version": "1.0.0",
+  "dependencies": {
+    "serverless-python-requirements": "4.0.3"
+  },
+  "devDependencies": {}
+}

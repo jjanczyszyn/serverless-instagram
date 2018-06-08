@@ -62,4 +62,9 @@ backend/config.json
 .serverless
 __pycache__/
 
-website/js/config.js
+front-end/js/config.js
+back-end/config.json
+yarn.lock
+
+*/js/config.js
+*/config.json

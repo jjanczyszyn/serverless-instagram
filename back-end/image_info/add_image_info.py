@@ -3,9 +3,9 @@ import logging
 import os
 import time
 
-METADATA_TABLE = os.environ['METADATA_TABLE']
+IMAGE_INFO_TABLE_NAME = os.environ['IMAGE_INFO_TABLE_NAME']
 DYNAMO_DB = boto3.resource('dynamodb')
-TABLE = DYNAMO_DB.Table(METADATA_TABLE)
+TABLE = DYNAMO_DB.Table(IMAGE_INFO_TABLE_NAME)
 
 S3 = boto3.client('s3')
 
@@ -14,6 +14,7 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
+    logger.info('Received event: {}'.format(event))
     key = event['Records'][0]['s3']['object']['key']
     bucket = event['Records'][0]['s3']['bucket']['name']
 

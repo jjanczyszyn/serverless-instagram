@@ -1,0 +1,7 @@
+var configConstants = {
+    auth0: {
+        domain: 'AUTH0 DOMAIN',
+        clientId: 'AUTH0 CLIENT ID'
+    },
+    apiBaseUrl: 'YOUR API BASE URL HERE NO TRAILING SLASH e.g. https://<some-id>.execute-api.us-east-1.amazonaws.com/dev',
+};

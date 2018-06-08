@@ -1,0 +1,8 @@
+{
+    "AUTH0_DOMAIN": "{auth0 domain}",
+    "AUTH0_SECRET": "{auth0 client secret}",
+    "AUTH0_CLIENT_ID": "{auth0 client id}",
+    "IMAGE_INFO_TABLE_NAME": "{unique dynamoDB table name}",
+    "UPLOAD_IMAGE_BUCKET_NAME": "{unique upload bucket name}",
+    "RESIZED_IMAGE_BUCKET_NAME": "{unique bucket name for resized images}"
+}

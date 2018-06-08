@@ -18,19 +18,19 @@ A serverless image sharing application example using Serverless Framework
 
 ## Back-end Configuration Steps
 1. Install the dependencies listed above.
-2. Create a configuration file in the [`backend`](backend) directory based on the example config [`config.json.example`](backend/config.json.example) named config.json
+2. Create a configuration file in the [`back-end`](back-end) directory based on the example config [`config.json.example`](back-end/config.json.example) named config.json
 
 ## Back-end deployment steps
-1. `cd backend`
+1. `cd back-end`
 2. `npm install`
 3. `sls deploy`
 
-## Website Configuration Steps
-1. In the [`website/js`](website/js) directory create a `config.js` file based on the [`config.js.example`](website/config.js.example) file given.
-2. Copy the API gateway base url (e.g. https://xx.execute-api.us-east-1.amazonaws.com/dev) into `apiBaseUrl` in your `website/js/config.js` file.
+## front-end Configuration Steps
+1. In the [`front-end/js`](front-end/js) directory create a `config.js` file based on the [`config.js.example`](front-end/config.js.example) file given.
+2. Copy the API gateway base url (e.g. https://xx.execute-api.us-east-1.amazonaws.com/dev) into `apiBaseUrl` in your `front-end/js/config.js` file.
 
-## Website
-1. `cd website`
+## front-end
+1. `cd front-end`
 2. `npm install`
 3. `npm start`
 4. Open your browser to [http://localhost:8100](http://localhost:8100)
@@ -70,7 +70,7 @@ licenses.
 
 | Library           | License |
 | ----------------- | ------- |
-| Auth0-Lock 8.3.2  | [MIT](https://github.com/auth0/lock/blob/v8.3.2/LICENSE) |
+| Auth0-Lock 11.7  | [MIT](https://github.com/auth0/lock/blob/v11.7.0/LICENSE) |
 | Bootstrap 3.3.1   | [MIT](https://github.com/twbs/bootstrap/blob/v3.3.1/LICENSE) |
 | jQuery 1.11.2     | [MIT](https://jquery.org/license/) |
 | moment.js         | [MIT](https://github.com/moment/moment/blob/develop/LICENSE) |

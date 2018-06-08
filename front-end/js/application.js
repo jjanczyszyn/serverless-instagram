@@ -1,50 +1,15 @@
-let ImageCardHelper = {
-    render: function(url, description){
-        let $new = $('#image-template').clone().attr({
-            'id': url,
-        }).show();
-
-        $new.find('img').attr('src', url).show();
-        $new.find('.metadata').text(description);
-        return $new;
-    },
-    extractInformation(data) {
-        /** prepare image information **/
-
-        // parse date from unix timestamp
-        let uploadDate = moment(data.createdAt, "x");
-
-        // extract username from email
-        let username = data.user.split("@", 1)[0];
-
-        // generate a description
-        let description = [uploadDate.fromNow(), "by", username].join(" ");
-
-        // return the final result
-        let result = {
-            url: data.image,
-            description: description
-        };
-        return result;
-    }
-};
-
 let AuthStorage = {
     store: function(token, profile){
-        localStorage.setItem('userToken', token);
+        localStorage.setItem('token', token);
         localStorage.setItem('profile', JSON.stringify(profile, null, 4));
     },
     retrieve: function(){
-        let result = {
-            token: null,
-            profile: null,
-            profileJson: null
-        };
-        let token = localStorage.getItem('userToken');
+        let result = {};
+        let token = localStorage.getItem('token');
         let profileJson = localStorage.getItem('profile');
         if (token) {
             result.token = token;
-        }
+        } else { return; }
         if (profileJson) {
             result.profileJson = profileJson;
             result.profile = JSON.parse(profileJson);
@@ -52,7 +17,7 @@ let AuthStorage = {
         return result;
     },
     clear: function(){
-        localStorage.removeItem('userToken');
+        localStorage.removeItem('token');
         localStorage.removeItem('profile');
     }
 };
@@ -60,21 +25,6 @@ let AuthStorage = {
 let UI = {
     showError: function(message) {
         alert(message);
-    },
-    UserProfile: {
-        toggle: function(profile){
-            let showAuthenticationElements = !!profile;
-            if (showAuthenticationElements) {
-                $('#profilename').text(profile.nickname);
-                $('#profilepicture').attr('src', profile.picture);
-            }
-
-            UI.LoginButton.toggle(!showAuthenticationElements);
-            UI.LogoutButton.toggle(showAuthenticationElements);
-            UI.UploadButton.toggle(showAuthenticationElements);
-            UI.ProfileButton.toggle(showAuthenticationElements);
-            $("#user-profile-jumbotron").toggle(showAuthenticationElements)
-        },
     },
     LoginButton: {
         toggle: function(condition) {
@@ -88,17 +38,7 @@ let UI = {
                         scope: 'openid email user_metadata picture'
                     }
                 };
-
-                auth0Lock.show(options, function (err, profile, token) {
-                    if (err) {
-                        let message = ['Failed to show auth0 dialog:', err + ""].join(' ');
-                        UI.showError(message);
-                        return;
-                    } else {
-                        AuthStorage.store(token, profile);
-                        UI.UserProfile.toggle(profile);
-                    }
-                });
+                auth0Lock.show(options);
 
                 return event.preventDefault();
             });
@@ -115,10 +55,11 @@ let UI = {
                 AuthStorage.clear();
 
                 UI.LoginButton.toggle(true);
-                UI.LogoutButton.toggle(false);
 
+                UI.LogoutButton.toggle(false);
                 UI.UploadButton.toggle(false);
                 UI.ProfileButton.toggle(false);
+                UI.Gallery.hide();
                 return event.preventDefault();
             });
         }
@@ -129,47 +70,55 @@ let UI = {
             return this;
         },
         bindEvents: function(){
-            $("#user-profile").click(function (event) {
+            $('#user-profile').click(function (event) {
                 let data = AuthStorage.retrieve();
                 $('#user-profile-raw-json').text(data.profileJson);
+                $('#user-token').text(data.token);
                 $('#user-profile-modal').modal();
 
                 return event.preventDefault();
             });
         }
     },
-    UploadButton: {
-        show: function() {
-            $('#upload-image-button').show();
-            return this;
+    UserProfile: {
+        toggle: function(profile){
+            let authenticated = !!profile;
+            if (authenticated) {
+                $('#profilename').text(profile.nickname);
+                $('#profilepicture').attr('src', profile.picture);
+            }
+
+            UI.LoginButton.toggle(!authenticated);
+            UI.LogoutButton.toggle(authenticated);
+            UI.UploadButton.toggle(authenticated);
+            UI.ProfileButton.toggle(authenticated);
+            $('#user-profile-jumbotron').toggle(authenticated);
         },
+    },
+    UploadButton: {
         toggle: function(condition){
             $('#upload-image-button').toggle(condition);
             return this;
         },
-        hide: function() {
-            $('#upload-image-button').hide();
-            return this;
-        },
         bindEvents: function(onFileSelected){
-            $("#upload-image-button").on('click', function (event) {
-                $("#upload").trigger('click');
+            $('#upload-image-button').on('click', function (event) {
+                $('#upload').trigger('click');
                 return event.preventDefault();
             });
 
-            $("#upload").on('change', function (event) {
+            $('#upload').on('change', function (event) {
                 let file = $('#upload').get(0).files[0];
                 let fileSizeMB = Math.round(100 * file.size / (1024 * 1024)) / 100;
                 if(fileSizeMB > 1){
                     let message = [
-                        "File cannot be greater than 1MB!",
-                        "The file uploaded:",
-                        "" + fileSizeMB + ""
+                        'File cannot be greater than 1MB!',
+                        'The file uploaded:',
+                        ' + fileSizeMB + '
                     ].join(' ');
 
-                    UI.showError(message)
+                    UI.showError(message);
                 } else {
-                    onFileSelected(file)
+                    onFileSelected(file);
                 }
             });
         }
@@ -183,6 +132,10 @@ let UI = {
         }
     },
     Gallery: {
+        hide: function(){
+            $('#image-list').hide();
+            return this;
+        },
         add: function($card) {
             $('#image-list').append($card);
             return this;
@@ -208,6 +161,37 @@ let UI = {
             $('#upload-progress').find('.progress-bar').css('width', percentage + '%');
             return this;
         }
+    }
+};
+
+let ImageCardHelper = {
+    render: function(url, description){
+        let $new = $('#image-template').clone().attr({
+            'id': url,
+        }).show();
+
+        $new.find('img').attr('src', url).show();
+        $new.find('.metadata').text(description);
+        return $new;
+    },
+    extractInformation(data) {
+        /** prepare image information **/
+
+        // parse date from unix timestamp
+        let uploadDate = moment(data.createdAt, 'x');
+
+        // extract username from email
+        let username = data.user.split('@', 1)[0];
+
+        // generate a description
+        let description = [uploadDate.fromNow(), 'by', username].join(' ');
+
+        // return the final result
+        let result = {
+            url: data.image,
+            description: description
+        };
+        return result;
     }
 };
 
@@ -267,29 +251,45 @@ let Lambda = {
 let application = {
     config: null,
     init: function (config) {
-        let user = AuthStorage.retrieve();
-
         this.config = config;
         this.lock = new Auth0Lock(
             config.auth0.clientId,
-            config.auth0.domain,
+            config.auth0.domain
         );
+        this.lock.on("authenticated", function(authResult) {
+            application.lock.getUserInfo(authResult.accessToken, function(error, profile) {
+              if (error) {
+                let message = ['Failed to show auth0 dialog:', error + ''].join(' ');
+                UI.showError(message);
+                return;
+              }
+              // Save token and profile locally
+              AuthStorage.store(authResult.idToken, profile);
+              application.wireProfile(profile);
+            });
+        });
         this.wireEvents();
+        let user = AuthStorage.retrieve();
+        if(user){
+            this.wireProfile(user.profile);
+        }
+        new ClipboardJS('#clippy', {
+            container: document.getElementById('user-profile-modal')
+        });
+    },
+    wireProfile: function (profile) {
         this.fetchFromDynamoDB();
-
-
-        UI.UserProfile.toggle(user.profile);
+        UI.UserProfile.toggle(profile);
     },
     wireEvents: function () {
         UI.LoginButton.bindEvents(this.lock);
         UI.LogoutButton.bindEvents();
         UI.ProfileButton.bindEvents();
-
         UI.UploadButton.bindEvents(function(file){
             let url = this.config.apiBaseUrl + '/get_signed_url?content_type='+ encodeURI(file.type);
-            let token = localStorage.getItem('userToken');
+            let token = localStorage.getItem('token');
             Lambda.getSignedS3Url(url, token).then(function(data, textStatus){
-                this.upload(file, data)
+                this.upload(file, data);
             }.bind(this));
         }.bind(this));
     },
@@ -300,30 +300,27 @@ let application = {
             UI.UploadProgress.hide();
 
             switch (textStatus) {
-                case "success":
+                case 'success':
                     setTimeout(function(){
                         this.fetchFromDynamoDB();
                     }.bind(this), 5000);
                     break;
-                case "error":
-                case "timeout":
-                case "parsererror":
-                case "abort":
+                case 'error':
+                case 'timeout':
+                case 'parsererror':
+                case 'abort':
                 default:
-                    UI.showError("failed to upload");
+                    UI.showError('failed to upload');
                     break;
             }
         }.bind(this));
     },
     fetchFromDynamoDB: function () {
-        let url = this.config.apiBaseUrl + '/list';
-        let token = localStorage.getItem('userToken');
+        let url = this.config.apiBaseUrl + '/list_images';
+        let token = localStorage.getItem('token');
 
-        Lambda.getImageListFromDynamoDB(url, token).then(function (unordered, status) {
+        Lambda.getImageListFromDynamoDB(url, token).then(function (images, status) {
             UI.Gallery.clear();
-            let images = unordered.sort(function(a, b){
-                return parseFloat(b.createdAt) - parseFloat(a.createdAt);
-            });
             $.each(images, function(index, data) {
                 UI.Image.add(data);
             });

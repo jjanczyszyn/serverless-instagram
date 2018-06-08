@@ -1,0 +1,16 @@
+{
+  "name": "serverless-instagram",
+  "version": "1.0.0",
+  "description": "Serverless Instagram",
+  "local-web-server": {
+    "port": 8100,
+    "forbid": "*.json"
+  },
+  "scripts": {
+    "start": "ws"
+  },
+  "devDependencies": {
+    "local-web-server": "^1.1.0"
+  },
+  "dependencies": {}
+}

@@ -3,8 +3,8 @@ import os
 import logging
 from PIL import Image, ImageOps
 
-RESIZED_BUCKET = os.environ['RESIZED_BUCKET']
-UPLOAD_BUCKET = os.environ['UPLOAD_BUCKET']
+RESIZED_IMAGE_BUCKET_NAME = os.environ['RESIZED_IMAGE_BUCKET_NAME']
+UPLOAD_IMAGE_BUCKET_NAME = os.environ['UPLOAD_IMAGE_BUCKET_NAME']
 
 s3 = boto3.client('s3')
 
@@ -13,11 +13,11 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    logger.info(event)
+    logger.info('Received event: {}'.format(event))
     key = event['Records'][0]['s3']['object']['key']
     bucket_input = event['Records'][0]['s3']['bucket']['name']
 
-    bucket_output = RESIZED_BUCKET
+    bucket_output = RESIZED_IMAGE_BUCKET_NAME
 
     download_path = '/tmp/original-' + key
     upload_path = '/tmp/' + key
@@ -39,7 +39,7 @@ def resize_image(image_path, resized_path):
 
 
 def get_s3_object_extra_args(key):
-    response = s3.head_object(Bucket=UPLOAD_BUCKET, Key=key)
+    response = s3.head_object(Bucket=UPLOAD_IMAGE_BUCKET_NAME, Key=key)
     logger.info('Response: {}'.format(response))
     extra_args = {
         'Metadata': response['Metadata'],

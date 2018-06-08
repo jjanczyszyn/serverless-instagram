@@ -29,14 +29,17 @@ def get_auth_response(principal_id, event):
     """
     Builds auth response allowing all methods
     """
-    tmp = event['methodArn'].split(':')
-    api_gateway_arn_tmp = tmp[5].split('/')
-    aws_account_id = tmp[4]
-    rest_api_id = api_gateway_arn_tmp[0]
-    aws_region = tmp[3]
-    stage = api_gateway_arn_tmp[1]
+    aws_region, aws_account_id, api_gateway_info = event['methodArn'].split(':')[3:]
+    api_gateway_id, stage = api_gateway_info.split('/')[:2]
 
-    policy = AuthPolicy(principal_id, aws_account_id, rest_api_id, aws_region, stage)
+    # tmp = event['methodArn'].split(':')
+    # api_gateway_arn_tmp = tmp[5].split('/')
+    # aws_account_id = tmp[4]
+    # rest_api_id = api_gateway_arn_tmp[0]
+    # aws_region = tmp[3]
+    # stage = api_gateway_arn_tmp[1]
+
+    policy = AuthPolicy(principal_id, aws_account_id, api_gateway_id, aws_region, stage)
     policy.allow_all_methods()
     auth_response = policy.build()
     context = {

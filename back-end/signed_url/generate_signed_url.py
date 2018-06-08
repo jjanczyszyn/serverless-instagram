@@ -12,11 +12,11 @@ mimetypes.init()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-BUCKET = os.environ['UPLOAD_BUCKET']
+BUCKET = os.environ['UPLOAD_IMAGE_BUCKET_NAME']
 
 
 def handler(event, context):
-    logger.info(event)
+    logger.info('Received event: {}'.format(event))
     content_type = event.get('queryStringParameters', {}).get('content_type')
     if not content_type:
         return build_response(400, {'message': 'Missing content_type query parameter!'})

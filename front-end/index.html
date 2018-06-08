@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="css/main.css">
 
-    <script src="js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
   </head>
 
   <body>
@@ -93,11 +93,16 @@
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">User Profile Information (from Auth0)</h4>
+            <h4 class="modal-title">Auth0 information about the user</h4>
           </div>
           <div class="modal-body">
-            <b>Raw JSON from Auth0:</b>
+            <b>profile:</b>
             <pre id="user-profile-raw-json"></pre>
+              <b>token:</b>
+              <button id="clippy" data-clipboard-target="#user-token">
+                <img src="assets/clippy.svg" alt="Copy to clipboard">
+              </button>
+            <pre id="user-token"></pre>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
@@ -107,10 +112,17 @@
     </div><!-- /.modal -->
     <!-- User profile modal -->
 
-    <script src="js/vendor/jquery-1.11.2.min.js"></script>
+    <!-- <script src="js/vendor/jquery-1.11.2.min.js"></script>
     <script src="js/vendor/bootstrap.min.js"></script>
     <script src="js/vendor/moment.min.js"></script>
-    <script src="js/vendor/lock-8.min.js"></script>
+
+
+        <script src="js/vendor/jquery-1.11.2.min.js"></script> -->
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
+    <script src="https://cdn.auth0.com/js/lock/11.7/lock.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
 
     <script src="js/config.js"></script>
     <script src="js/application.js"></script>

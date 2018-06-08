@@ -17,16 +17,16 @@ provider:
     - Effect: Allow
       Action:
         - s3:*
-      Resource: arn:aws:s3:::${self:custom.config.UPLOAD_BUCKET}
+      Resource: arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
     - Effect: Allow
       Action:
         - s3:*
-      Resource: arn:aws:s3:::${self:custom.config.UPLOAD_BUCKET}/*
+      Resource: arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}/*
     - Effect: "Allow"
       Action:
         - s3:PutObject
       Resource:
-        - arn:aws:s3:::${self:custom.config.RESIZED_BUCKET}/*
+        - arn:aws:s3:::${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}/*
     - Effect: Allow
       Action:
         - logs:CreateLogGroup
@@ -39,74 +39,65 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.config.METADATA_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.config.IMAGE_INFO_TABLE_NAME}"
 
 package:
   individually: true
-  exclude:
-    - '*/**'
 
 functions:
-  auth:
+  authorizer:
+    module: authorizer
     handler: authorizer.handler
     environment:
       AUTH0_SECRET: ${self:custom.config.AUTH0_SECRET}
       AUTH0_CLIENT_ID: ${self:custom.config.AUTH0_CLIENT_ID}
-    package:
-      include:
-        - authorizer.py
 
-  signurl:
+  signedUrl:
+    module: signed_url
     handler: generate_signed_url.handler
     environment:
-      UPLOAD_BUCKET: ${self:custom.config.UPLOAD_BUCKET}
+      UPLOAD_IMAGE_BUCKET_NAME: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
     package:
       include:
         - common/*
-        - generate_signed_url.py
     events:
       - http:
+          cors: true
+          method: get
           path: /get_signed_url
-          cors: true
-          method: get
-          authorizer: auth
+          authorizer: authorizer
 
-  metadata:
-    handler: add_metadata.handler
+  addImageInfo:
+    module: image_info
+    handler: add_image_info.handler
     environment:
-        METADATA_TABLE: ${self:custom.config.METADATA_TABLE}
-    package:
-      include:
-        - add_metadata.py
+        IMAGE_INFO_TABLE_NAME: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
 
-  list:
-    handler: list_metadata.handler
+  listImages:
+    module: image_list
+    handler: list_images.handler
     environment:
-        METADATA_TABLE: ${self:custom.config.METADATA_TABLE}
+        IMAGE_INFO_TABLE_NAME: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
     package:
       include:
         - common/*
-        - list_metadata.py
     events:
       - http:
-          path: /list
-          method: get
           cors: true
+          method: get
+          path: /list_images
+          authorizer: authorizer
 
   resize:
+    module: image_resize
     handler: image_resize.handler
     environment:
-        RESIZED_BUCKET: ${self:custom.config.RESIZED_BUCKET}
-        UPLOAD_BUCKET: ${self:custom.config.UPLOAD_BUCKET}
-    package:
-      include:
-        - image_resize.py
+        UPLOAD_IMAGE_BUCKET_NAME: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
+        RESIZED_IMAGE_BUCKET_NAME: ${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}
 
 resources:
   Resources:
-    ResizePermissionUploadBucket:
+    ResizeLambdaInvokationPermission:
       DependsOn:
         - ResizeLambdaFunction
       Type: AWS::Lambda::Permission
@@ -115,22 +106,20 @@ resources:
           "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
         Action: "lambda:InvokeFunction"
         Principal: "s3.amazonaws.com"
-        SourceArn: "arn:aws:s3:::${self:custom.config.UPLOAD_BUCKET}"
+        SourceArn: "arn:aws:s3:::${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}"
 
     UploadBucket:
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
       DependsOn:
-        - ResizePermissionUploadBucket
+        - ResizeLambdaInvokationPermission
       Properties:
-        BucketName: ${self:custom.config.UPLOAD_BUCKET}
+        BucketName: ${self:custom.config.UPLOAD_IMAGE_BUCKET_NAME}
         CorsConfiguration:
           CorsRules:
             - AllowedOrigins:
                 - "*"
               AllowedMethods:
-                - "GET"
-                - "POST"
                 - "PUT"
               AllowedHeaders:
                 - "*"
@@ -141,36 +130,36 @@ resources:
               Function:
                 "Fn::GetAtt": [ ResizeLambdaFunction, Arn ]
 
-    PushMetadataPermissionResizedBucket:
+    AddImageInfoLambdaInvokationPermission:
       DependsOn:
-        - MetadataLambdaFunction
+        - AddImageInfoLambdaFunction
       Type: AWS::Lambda::Permission
       Properties:
         FunctionName:
-          "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
+          "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
         Action: "lambda:InvokeFunction"
         Principal: "s3.amazonaws.com"
-        SourceArn: "arn:aws:s3:::${self:custom.config.RESIZED_BUCKET}"
+        SourceArn: "arn:aws:s3:::${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}"
 
-    ImageResizedBucket:
+    ResizedImageBucket:
       DependsOn:
-        - PushMetadataPermissionResizedBucket
+        - AddImageInfoLambdaInvokationPermission
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
       Properties:
-        BucketName: ${self:custom.config.RESIZED_BUCKET}
+        BucketName: ${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}
         NotificationConfiguration:
           LambdaConfigurations:
             - Event: "s3:ObjectCreated:*"
               Function:
-                "Fn::GetAtt": [ MetadataLambdaFunction, Arn ]
+                "Fn::GetAtt": [ AddImageInfoLambdaFunction, Arn ]
 
-    ImageResizedBucketPolicy:
+    ResizedImageBucketPolicy:
       Type: AWS::S3::BucketPolicy
       DependsOn:
-        - ImageResizedBucket
+        - ResizedImageBucket
       Properties:
-        Bucket: ${self:custom.config.RESIZED_BUCKET}
+        Bucket: ${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -178,22 +167,22 @@ resources:
               Effect: "Allow"
               Principal: "*"
               Action: "s3:GetObject"
-              Resource: "arn:aws:s3:::${self:custom.config.RESIZED_BUCKET}/*"
+              Resource: "arn:aws:s3:::${self:custom.config.RESIZED_IMAGE_BUCKET_NAME}/*"
 
-    MetadataTable:
+    ImageInfoTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
-          - AttributeName: image
+          - AttributeName: user
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: N
         KeySchema:
-          - AttributeName: image
+          - AttributeName: user
             KeyType: HASH
           - AttributeName: createdAt
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: ${self:custom.config.METADATA_TABLE}
+        TableName: ${self:custom.config.IMAGE_INFO_TABLE_NAME}
